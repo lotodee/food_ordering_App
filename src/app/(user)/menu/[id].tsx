@@ -1,19 +1,23 @@
 import { View, Text, Image, StyleSheet, Pressable } from "react-native";
 import React, { useState } from "react";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import products from "@/assets/data/products";
 import { defaultPizzaImage } from "@/src/components/ProductListItem";
 import Button from "@/src/components/Button";
-const sizes = ["S", "M", "L", "XL"];
+import { useCart } from "@/src/providers/CartProvider";
+import { PizzaSize } from "@/src/types";
+
+const sizes:PizzaSize[] = ["S", "M", "L", "XL"];
 
 const ProductDetailsScreen = () => {
-  const [selectedSize, setSelectedSize] = useState("M");
+  const [selectedSize, setSelectedSize] = useState<PizzaSize>("M");
 
+const {addItem} = useCart();
+
+const {items} = useCart();
   const { id } = useLocalSearchParams();
+const router = useRouter();
 
-  const addToCart = () =>{
-    console.warn('Adding to Cart , size' , selectedSize)
-  }
 
   const product = products.find((p) => p.id.toString() === id);
 
@@ -21,9 +25,21 @@ const ProductDetailsScreen = () => {
     return <Text>Product not found</Text>;
   }
 
+  const addToCart = () =>{
+   router.push('/cart')
+if(!product){
+  return;
+}
+
+addItem(product , selectedSize)
+
+
+    console.warn('Adding to Cart , size' , selectedSize)
+  }
+
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{ title: `Details of ${product.name}` }} />
+      <Stack.Screen options={{ title: `${product.name}` }} />
 
       <Image
         source={{ uri: product.image || defaultPizzaImage }}
