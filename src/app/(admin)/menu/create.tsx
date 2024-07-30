@@ -1,15 +1,17 @@
-import { View, Text, StyleSheet, TextInput, Image } from "react-native";
+import { View, Text, StyleSheet, TextInput, Image, Alert } from "react-native";
 import React, { useState } from "react";
 import Button from "@/src/components/Button";
 import { defaultPizzaImage } from "@/src/components/ProductListItem";
 import Colors from "@/src/constants/Colors";
 import * as ImagePicker from 'expo-image-picker';
+import { Stack, useLocalSearchParams } from "expo-router";
+import products from "@/assets/data/products";
 const CreateProductScreen = () => {
 const [name , setName] = useState('');
 const [price , setPrice] = useState('');
 const [errors, setErrors] =useState('');
-
-
+const {id} = useLocalSearchParams()
+const isUpdating = !!id
 const [image, setImage] = useState<string | null>(null);
 
 const pickImage = async () => {
@@ -28,6 +30,7 @@ const pickImage = async () => {
   }
 };
 
+const currentProduct  = products.find((item)=> item.id.toString() === id)
 
 
 const validateInput = () =>{
@@ -52,6 +55,25 @@ const resetFields =()=>{
     setPrice('');
 }
 
+
+const onSubmit = () =>{
+  if(isUpdating){
+    onUpdateCreate()
+  }else{
+    onCreate()
+  }
+}
+
+const onUpdateCreate =()=>{
+  if(!validateInput()){
+      return;
+  }
+  console.warn('Updating product' , price , name )
+  
+  //saving in the database
+  resetFields()
+}
+
     const onCreate =()=>{
         if(!validateInput()){
             return;
@@ -61,20 +83,41 @@ const resetFields =()=>{
         //saving in the database
         resetFields()
     }
+
+const onDelete = () =>{
+  console.warn("DELETE!!!")
+}
+
+const confirmDelete = () =>{
+  Alert.alert("Confirm" , "Are you sure you want to delete", [
+    {
+    text:"Cancel"
+  },
+  {
+    text:"Delete",
+    style:"destructive",
+    onPress:onDelete
+    
+  }
+])
+}
+
   return (
     <View style={styles.container}>
+      <Stack.Screen options={{title: isUpdating ? 'update screen' :'create screen'}}/>
         <Image source={{uri: image || defaultPizzaImage}} style={styles.image}/>
 
         <Text onPress={pickImage} style={styles.textButton}>Select Image</Text>
       <Text style={styles.label}>Name</Text>
-      <TextInput placeholder="Name" style={styles.input}
+      <TextInput
+       placeholder={isUpdating ? `${currentProduct?.name}`:"Name"} style={styles.input}
       value={name}
       onChangeText={setName}
       />
 
       <Text style={styles.label}>Price ($)</Text>
       <TextInput
-        placeholder="$9.99"
+        placeholder={isUpdating ? `${currentProduct?.price}`:"9.99"}
         style={styles.input}
         value={price}
         onChangeText={setPrice}
@@ -82,9 +125,10 @@ const resetFields =()=>{
       />
 <Text style={{color:'red'}}>{errors}</Text>
       <Button
-      text="Create"
-      onPress={onCreate}
+      text={isUpdating? 'Update':"Create"}
+      onPress={onSubmit}
       />
+      {isUpdating && <Text onPress={confirmDelete} style={styles.textButton}>Delete</Text>}
     </View>
   );
 };
